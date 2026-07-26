@@ -1,0 +1,12 @@
+{
+  "seed": 42,
+  "duration_seconds": 0.06,
+  "files": [
+    "data/results/ablation_study.csv",
+    "data/results/fig4_detection_vs_length.csv",
+    "data/results/fig5_wri_vs_attacks.csv",
+    "data/results/fig6_overhead_vs_scale.csv",
+    "data/results/statistical_tests.csv",
+    "data/results/table3_summary.csv"
+  ]
+}

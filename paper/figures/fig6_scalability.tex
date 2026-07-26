@@ -1,0 +1,86 @@
+% Figure 6 — Computational Overhead (%) vs. Model Size (M parameters)
+
+\begin{tikzpicture}
+\begin{axis}[
+  width=\columnwidth,
+  height=6cm,
+  xlabel={Model Size (millions of parameters, log scale)},
+  ylabel={Computational Overhead (\%)},
+  ymin=0, ymax=18,
+  xmode=log,
+  log basis x=10,
+  xmin=100, xmax=15000,
+  xtick={125,350,750,1300,2700,7000,13000},
+  xticklabels={125M, 350M, 750M, 1.3B, 2.7B, 7B, 13B},
+  xticklabel style={font=\scriptsize, rotate=30, anchor=north east},
+  yticklabel style={font=\scriptsize},
+  legend pos=north west,
+  legend style={font=\scriptsize, cells={anchor=west}},
+  grid=major,
+  grid style={gray!25, dashed},
+  thick,
+  mark size=2.0pt,
+]
+
+% GuardMark (ours)
+\addplot+[
+  color=blue!80!black, mark=*, solid, very thick,
+  error bars/.cd, y dir=both, y explicit
+] coordinates {
+  (125,  3.61)+-(0,0.18)
+  (350,  4.03)+-(0,0.19)
+  (750,  4.38)+-(0,0.20)
+  (1300, 4.63)+-(0,0.20)
+  (2700, 4.95)+-(0,0.21)
+  (7000, 5.34)+-(0,0.22)
+  (13000,5.59)+-(0,0.22)
+};
+\addlegendentry{GuardMark (ours)}
+
+% KGW-Watermark [6]
+\addplot+[
+  color=green!70!black, mark=square*, dashed, thick,
+  error bars/.cd, y dir=both, y explicit
+] coordinates {
+  (125,  6.42)+-(0,0.22)
+  (350,  7.06)+-(0,0.23)
+  (750,  7.59)+-(0,0.24)
+  (1300, 7.99)+-(0,0.25)
+  (2700, 8.48)+-(0,0.25)
+  (7000, 9.04)+-(0,0.26)
+  (13000,9.40)+-(0,0.27)
+};
+\addlegendentry{KGW-Watermark \cite{kirchenbauer2023watermark}}
+
+% Zhao et al.
+\addplot+[
+  color=orange!80!black, mark=triangle*, dash dot, thick,
+  error bars/.cd, y dir=both, y explicit
+] coordinates {
+  (125,  8.15)+-(0,0.25)
+  (350,  8.91)+-(0,0.26)
+  (750,  9.56)+-(0,0.27)
+  (1300, 10.04)+-(0,0.28)
+  (2700, 10.64)+-(0,0.28)
+  (7000, 11.33)+-(0,0.29)
+  (13000,11.77)+-(0,0.30)
+};
+\addlegendentry{Zhao et al. \cite{zhao2023protecting}}
+
+% EWD
+\addplot+[
+  color=red!70!black, mark=diamond*, dotted, thick,
+  error bars/.cd, y dir=both, y explicit
+] coordinates {
+  (125,  9.98)+-(0,0.28)
+  (350,  10.88)+-(0,0.29)
+  (750,  11.64)+-(0,0.30)
+  (1300, 12.19)+-(0,0.31)
+  (2700, 12.91)+-(0,0.31)
+  (7000, 13.72)+-(0,0.32)
+  (13000,14.25)+-(0,0.33)
+};
+\addlegendentry{Fernandez et al. \cite{fernandez2023three}}
+
+\end{axis}
+\end{tikzpicture}

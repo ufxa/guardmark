@@ -1,0 +1,8 @@
+Configuration,Statistical,Behavioral,Weight-Space,WRI Mean,WRI Std
+Full GuardMark,True,True,True,0.892,0.015
+w/o Statistical Layer,False,True,True,0.466,0.015
+w/o Behavioral Fingerprint,True,False,True,0.559,0.02
+w/o Weight-Space Embedding,True,True,False,0.671,0.019
+Statistical Only,True,False,False,0.378,0.023
+Behavioral Only,False,True,False,0.29,0.017
+Weight-Space Only,False,False,True,0.183,0.021

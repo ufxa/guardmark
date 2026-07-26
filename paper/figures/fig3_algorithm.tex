@@ -1,0 +1,90 @@
+% Figure 3 -- GuardMark Algorithm + WRI Novel Metric
+% Uses algorithm2e package
+
+\begin{algorithm*}[tp]
+\DontPrintSemicolon
+\SetAlgoLined
+\SetKwInOut{Input}{Input}
+\SetKwInOut{Output}{Output}
+\SetKwComment{Comment}{$\triangleright$\ }{}
+
+\caption{GuardMark: Multi-Layer Watermark Injection and Verification.
+  The WRI computation (highlighted box) is the novel metric introduced in this
+  paper. Complexity: injection $O(|\mathcal{D}| \cdot |\mathcal{V}| + N_f
+  \cdot d)$; verification $O(T+N_f)$; WRI $O(1)$. (Simulation-based
+  evaluation; see Section~\ref{sec:eval}.)}
+\label{fig:algorithm}
+
+\Input{Base model $\mathcal{M}$, secret key $\mathcal{K}$, green-list fraction
+       $\gamma \in (0,1)$, logit bias $\delta > 0$, fingerprint set
+       $\mathcal{F} = \{(p_i, r_i)\}_{i=1}^{N_f}$, cosine threshold $\tau$,
+       WRI weights $\alpha, \beta, \gamma_w$ with $\alpha+\beta+\gamma_w=1$}
+\Output{Protected model $\mathcal{M}^*$; verification function
+        $\textsc{Verify}(\hat{\mathcal{M}}, \mathcal{K}, \mathcal{F})$}
+
+\BlankLine
+\tcp{\textbf{Phase 1 -- Statistical Token Watermarking (WIA)}}
+\For{each fine-tuning step $t$}{
+  $\mathcal{G}_t \leftarrow h(\mathcal{K} \| t) \bmod |\mathcal{V}|$
+  \Comment{pseudorandom green list, $|\mathcal{G}_t| = \gamma|\mathcal{V}|$}\;
+  \For{each token $w \in \mathcal{G}_t$}{
+    $\ell_t[w] \mathrel{+}= \delta$
+    \Comment{bias logits before softmax}\;
+  }
+  Sample $x_t \sim \text{Softmax}(\ell_t / T)$\;
+}
+$\mathcal{M}_{\text{wm}} \leftarrow \textsc{FineTune}(\mathcal{M},\, \mathcal{D},\,
+  \{\ell_t + \delta\cdot\mathbf{1}[\cdot \in \mathcal{G}_t]\})$\;
+
+\BlankLine
+\tcp{\textbf{Phase 2 -- Behavioral Fingerprinting (FVA)}}
+$\Delta W_{\mathcal{F}} \leftarrow \textsc{LoRA-Adapt}(\mathcal{M}_{\text{wm}},\,
+  \{(p_i, r_i)\}_{i=1}^{N_f})$\;
+$\mathcal{M}^* \leftarrow \mathcal{M}_{\text{wm}} \oplus \Delta W_{\mathcal{F}}$\;
+
+\BlankLine
+\tcp{\textbf{Phase 3 -- Weight-Space Gradient Embedding (WIA+)}}
+$\sigma \leftarrow \textsc{WatermarkSign}(\mathcal{K},\, \nabla_\theta \mathcal{L})$
+\Comment{steganographic signature in gradient direction}\;
+$\mathcal{M}^* \leftarrow \mathcal{M}^* + \epsilon \cdot \sigma$
+\Comment{imperceptible perturbation, $\epsilon \ll 1$}\;
+
+\BlankLine
+\hrulefill\;
+\BlankLine
+\tcp{\textbf{Verification Procedure}}
+\SetKwFunction{FVerify}{Verify}
+\SetKwProg{Fn}{Function}{:}{}
+\Fn{\FVerify{$\hat{\mathcal{M}},\, \mathcal{K},\, \mathcal{F}$}}{
+  \tcp{WIA Detection via hypothesis test}
+  Generate $T$ tokens from $\hat{\mathcal{M}}$; count $|\mathcal{G}|$ green tokens\;
+  $z \leftarrow (|\mathcal{G}| - T\gamma)\,/\,\sqrt{T\gamma(1-\gamma)}$\;
+  $p_d \leftarrow \mathbf{1}[z > z_\alpha]$\;
+
+  \tcp{FVA Detection via cosine similarity}
+  $p_f \leftarrow |\{i : \cos(\hat{r}_i,\, r_i) \geq \tau\}|\,/\,N_f$\;
+
+  \tcp{Robustness score from ablation}
+  $R \leftarrow \textsc{RobustnessProbe}(\hat{\mathcal{M}},\, \mathcal{K})$\;
+
+  \BlankLine
+  \tcp{Novel Metric: Watermark Robustness Index (WRI)}
+  \begin{tcolorbox}[colback=yellow!8, colframe=orange!70!black,
+    boxrule=0.8pt, left=4pt, right=4pt, top=2pt, bottom=2pt]
+  $\mathrm{WRI}(\hat{\mathcal{M}}) \;=\; \alpha \cdot p_d
+    \;+\; \beta \cdot (1 - p_{\text{fp}})
+    \;+\; \gamma_w \cdot R$\par
+  \centering\small where $\alpha + \beta + \gamma_w = 1,\quad
+    p_d, p_{\text{fp}}, R \in [0,1]$
+  \end{tcolorbox}
+
+  \Return $\mathrm{WRI}(\hat{\mathcal{M}}) \geq \tau_{\text{WRI}}$
+    \Comment{$\tau_{\text{WRI}} = 0.70$ (default)}\;
+}
+
+\BlankLine
+\textbf{Complexity:}
+Injection $O(|\mathcal{D}| \cdot |\mathcal{V}| + N_f \cdot d)$;
+Verification $O(T + N_f)$;
+WRI computation $O(1)$.
+\end{algorithm*}

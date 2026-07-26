@@ -1,0 +1,78 @@
+% Figure 1 — GuardMark System Architecture Overview
+% Requires: tikz, calc, arrows.meta, positioning, fit, backgrounds, patterns
+
+\begin{tikzpicture}[
+  font=\small,
+  >=Stealth,
+  box/.style={
+    draw=black!70, rounded corners=3pt, thick,
+    minimum height=1.0cm, text centered, text width=2.4cm,
+    fill=#1!15
+  },
+  wbox/.style={
+    draw=black!70, rounded corners=3pt, thick,
+    minimum height=0.85cm, text centered, text width=2.0cm,
+    fill=#1!20
+  },
+  arrow/.style={->, thick, #1},
+  label/.style={font=\scriptsize\itshape, text=black!60}
+]
+
+% ── Row 0: Owner side ──────────────────────────────────────────────────────
+\node[box=blue]  (base)    at (0,0)    {Base LLM\\(pre-trained)};
+\node[box=green] (dataset) at (3.5,0)  {Private\\Fine-Tune Dataset};
+\node[box=orange](skey)    at (7,0)    {Secret Key $\mathcal{K}$\\+ Fingerprint Set $\mathcal{F}$};
+
+% ── Row 1: GuardMark Injection Layers ──────────────────────────────────────
+\node[box=cyan, text width=2.8cm, minimum height=1.1cm]
+  (l1) at (0,-2.5) {Layer 1: Statistical\\Token Watermarking\\(WIA)};
+\node[box=purple, text width=2.8cm, minimum height=1.1cm]
+  (l2) at (3.5,-2.5) {Layer 2: Behavioral\\Fingerprinting\\(FVA)};
+\node[box=teal, text width=2.8cm, minimum height=1.1cm]
+  (l3) at (7,-2.5) {Layer 3: Weight-Space\\Gradient Embedding\\(WIA+)};
+
+% ── Row 2: Protected Model ──────────────────────────────────────────────────
+\node[box=green, text width=3.2cm, minimum height=1.1cm]
+  (protected) at (3.5,-5.0) {Protected Fine-Tuned\\LLM $\mathcal{M}^*$};
+
+% ── Row 3: Deployment and Claim ────────────────────────────────────────────
+\node[box=gray, text width=2.0cm] (deploy) at (1.0,-7.5) {Commercial\\Deployment\\(API / Model)};
+\node[box=red,  text width=2.0cm] (suspect) at (4.0,-7.5) {Suspect\\Model $\hat{\mathcal{M}}$\\(Adversary)};
+\node[box=blue, text width=2.4cm, minimum height=1.0cm]
+  (oca) at (7.0,-7.5) {Ownership\\Claim Agent\\(OCA)};
+
+% ── Row 4: Decision ────────────────────────────────────────────────────────
+\node[box=green, text width=2.2cm] (confirmed) at (5.5,-9.6)
+  {Ownership\\Confirmed};
+\node[box=red,   text width=2.2cm] (rejected)  at (8.5,-9.6)
+  {Claim\\Rejected};
+
+% ── Arrows: top row to injection layers ────────────────────────────────────
+\draw[arrow=blue!60]   (base)    -- (l1);
+\draw[arrow=green!60]  (dataset) -- (l1);
+\draw[arrow=green!60]  (dataset) -- (l2);
+\draw[arrow=orange!60] (skey)    -- (l2);
+\draw[arrow=orange!60] (skey)    -- (l3);
+
+% ── Arrows: injection layers to protected model ─────────────────────────────
+\draw[arrow=cyan!60]   (l1) -- (protected);
+\draw[arrow=purple!60] (l2) -- (protected);
+\draw[arrow=teal!60]   (l3) -- (protected);
+
+% ── Arrows: protected model to deployment/suspect ───────────────────────────
+\draw[arrow=green!60] (protected) -- (deploy);
+\draw[arrow=red!60,dashed] (protected) -- node[label,right]{stolen/re-FT} (suspect);
+
+% ── Arrows: claim flow ─────────────────────────────────────────────────────
+\draw[arrow=blue!60]  (suspect) -- (oca);
+\draw[arrow=orange!60] (skey) -- ++(0,-4.0) -| (oca);
+\draw[arrow=green!60]  (oca) -- node[label,left]{WRI $\geq \tau$} (confirmed);
+\draw[arrow=red!60]    (oca) -- node[label,right]{WRI $< \tau$} (rejected);
+
+% ── Bounding box labels ──────────────────────────────────────────────────────
+\node[font=\bfseries\scriptsize, text=blue!70] at (-1.7, 0)   {Owner};
+\node[font=\bfseries\scriptsize, text=cyan!70] at (-1.7,-2.5) {Injection};
+\node[font=\bfseries\scriptsize, text=gray!70] at (-1.7,-5.0) {Protected};
+\node[font=\bfseries\scriptsize, text=red!70]  at (-1.7,-7.5) {Verification};
+
+\end{tikzpicture}
