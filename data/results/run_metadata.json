@@ -1,6 +1,6 @@
 {
   "seed": 42,
-  "duration_seconds": 0.06,
+  "duration_seconds": 0.05,
   "files": [
     "data/results/ablation_study.csv",
     "data/results/fig4_detection_vs_length.csv",
