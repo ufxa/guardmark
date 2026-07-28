@@ -1,7 +1,7 @@
 # GuardMark: A Robust Watermarking and Fingerprinting Framework for Intellectual Property Protection of Fine-Tuned Large Language Models
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Paper](https://img.shields.io/badge/Paper-IEEE%20TIFS-blue)](https://github.com/allancostaphd/guardmark)
+[![Paper](https://img.shields.io/badge/Paper-IEEE%20TIFS-blue)](https://github.com/ufxa/guardmark)
 
 ## Abstract
 
