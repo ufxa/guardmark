@@ -1,6 +1,6 @@
-Comparison,W-statistic,p-value,Significant (p<0.01),Effect size (r)
-GuardMark vs KGW-Watermark [6],4853.0,6.00e-16,Yes,68.2912
-GuardMark vs Zhao et al. [7],5022.0,4.52e-18,Yes,70.6693
-GuardMark vs EWD [8],5050.0,1.95e-18,Yes,71.0634
-GuardMark vs Cater [9],5050.0,1.95e-18,Yes,71.0634
-GuardMark vs IPGuard [10],5050.0,1.95e-18,Yes,71.0634
+Comparison,Wilcoxon W,p-value,Effect size r,Significant (alpha=0.0017)
+GuardMark vs KGW-Watermark,5029.0,3.67e-18,1.992,True
+GuardMark vs Zhao et al.,5050.0,1.95e-18,2.0,True
+GuardMark vs EWD,5050.0,1.95e-18,2.0,True
+GuardMark vs Cater,5050.0,1.95e-18,2.0,True
+GuardMark vs IPGuard,5050.0,1.95e-18,2.0,True

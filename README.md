@@ -34,8 +34,11 @@ guardmark/
 ## How to Reproduce
 
 ```bash
-# Run experiments
-python3 codeA100/run_guardmark_experiments.py --seed 42 --output-dir data/results/
+# Install dependencies
+pip install numpy scipy pandas
+
+# Run all experiments (no GPU required — parametric simulation)
+python3 src/run_experiments.py --seed 42 --output-dir data/results/
 
 # Build PDF
 ./scripts/build.sh
