@@ -23,7 +23,7 @@
         $\textsc{Verify}(\hat{\mathcal{M}}, \mathcal{K}, \mathcal{F})$}
 
 \BlankLine
-\tcp{\textbf{Phase 1 -- Statistical Token Watermarking (WIA)}}
+\tcp{\textbf{Phase 1: Statistical Token Watermarking (WIA)}}
 \For{each fine-tuning step $t$}{
   $\mathcal{G}_t \leftarrow h(\mathcal{K} \| t) \bmod |\mathcal{V}|$
   \Comment{pseudorandom green list, $|\mathcal{G}_t| = \gamma|\mathcal{V}|$}\;
@@ -37,13 +37,13 @@ $\mathcal{M}_{\text{wm}} \leftarrow \textsc{FineTune}(\mathcal{M},\, \mathcal{D}
   \{\ell_t + \delta\cdot\mathbf{1}[\cdot \in \mathcal{G}_t]\})$\;
 
 \BlankLine
-\tcp{\textbf{Phase 2 -- Behavioral Fingerprinting (FVA)}}
+\tcp{\textbf{Phase 2: Behavioral Fingerprinting (FVA)}}
 $\Delta W_{\mathcal{F}} \leftarrow \textsc{LoRA-Adapt}(\mathcal{M}_{\text{wm}},\,
   \{(p_i, r_i)\}_{i=1}^{N_f})$\;
 $\mathcal{M}^* \leftarrow \mathcal{M}_{\text{wm}} \oplus \Delta W_{\mathcal{F}}$\;
 
 \BlankLine
-\tcp{\textbf{Phase 3 -- Weight-Space Gradient Embedding (WIA+)}}
+\tcp{\textbf{Phase 3: Weight-Space Gradient Embedding (WIA+)}}
 $\sigma \leftarrow \textsc{WatermarkSign}(\mathcal{K},\, \nabla_\theta \mathcal{L})$
 \Comment{steganographic signature in gradient direction}\;
 $\mathcal{M}^* \leftarrow \mathcal{M}^* + \epsilon \cdot \sigma$

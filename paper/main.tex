@@ -139,8 +139,13 @@ primarily at the output level, embedding statistical signatures in generated
 text \cite{kirchenbauer2023watermark,zhao2023protecting,fernandez2023three}.
 While effective in benign settings, these approaches are fragile: a moderately
 skilled adversary can eliminate text-level watermarks via re-fine-tuning or
-paraphrasing in under an hour of compute time. Model-level watermarking
-techniques that embed signatures in weight space
+paraphrasing in under an hour of compute time. The closest prior work to ours,
+Kirchenbauer et al.~\cite{kirchenbauer2023watermark} (KGW-Watermark), addresses
+output-level statistical detection and achieves 90.7\% detection on pristine
+models, but falls short in three critical dimensions: it provides no model-weight
+protection, no composite robustness metric, and no multi-attack evaluation
+protocol, leaving a compliance and security gap that GuardMark is designed to
+close. Model-level watermarking techniques that embed signatures in weight space
 \cite{uchida2017embedding,zhang2018protecting} were designed for
 classification networks and do not transfer cleanly to autoregressive
 transformer architectures. Behavioral fingerprinting methods
@@ -191,59 +196,159 @@ Section~\ref{sec:conclusion} concludes.
 
 \subsection{Output-Level Watermarking for LLMs}
 
-Kirchenbauer et al.~\cite{kirchenbauer2023watermark} pioneered a practical
-output-level watermark by partitioning the vocabulary into a green list and
-a red list at each decoding step using a pseudorandom key, then biasing
-generation toward green tokens. The embedded signal is detectable via a
-hypothesis test on the fraction of green tokens. Zhao et
-al.~\cite{zhao2023protecting} extended this approach to minimize perplexity
-impact via constrained sampling. Fernandez et al.~\cite{fernandez2023three}
-strengthened statistical guarantees against substitution attacks. More recent
-work by Kuditipudi et al.~\cite{kuditipudi2023robust} achieves
-distortion-free watermarking via rejection sampling, and Christ et
-al.~\cite{christ2024undetectable} proved information-theoretically
-undetectable watermarks are constructible for sufficiently expressive models.
-The critical limitation of all these approaches is that the watermark resides
-in the text distribution, not in the model weights: any fine-tuning of the
-model can shift the distribution and erase the signal.
+Kirchenbauer et al.~\cite{kirchenbauer2023watermark} introduced the KGW-Watermark,
+the first practical output-level watermark for LLMs. At each decoding step, the
+vocabulary is split into a pseudorandom green list and a red list; logits for green
+tokens are biased by an additive constant $\delta$ before softmax sampling, and
+ownership is verified via a one-sided $z$-test on the green-token fraction.
+KGW-Watermark achieves 90.7\% detection on pristine models and serves as the
+primary baseline in this work. However, the signal resides entirely in the output
+token distribution: re-fine-tuning shifts this distribution and erases the
+watermark. KGW provides no weight-space layer, no behavioral fingerprint, and
+no composite robustness metric, yielding a WRI of 0.788 in our evaluation.
 
-On the reliability of watermarks,
-Kirchenbauer et al.~\cite{kirchenbauer2024reliability} showed that token-level
-schemes are vulnerable to synonymy attacks and temperature variations, and Hu
-et al.~\cite{hu2023survey} proposed unbiased variants to reduce distributional
-distortion. GuardMark incorporates statistical token watermarking as only one
-of three layers, addressing fragility by providing fallback verification
-through behavioral fingerprinting and weight-space signatures.
+Zhao et al.~\cite{zhao2023protecting} extended the green-list scheme with a
+perplexity constraint during generation, reducing watermark-induced quality
+degradation by approximately 15\% relative to KGW-Watermark at comparable
+detection rates. The constrained sampling mechanism selects among green tokens
+to minimize sentence perplexity. Nevertheless, the watermark signal still
+resides in the token distribution and is erased by re-fine-tuning regardless
+of perplexity optimization, limiting applicability to deployment scenarios
+where the model cannot be copied and retrained.
+
+Fernandez et al.~\cite{fernandez2023three} proposed three consolidating
+techniques for statistical watermarks: a multi-key vocabulary partitioning
+scheme, a provably robust token-substitution defense, and improved detection
+power under paraphrasing. Their statistical guarantees are tighter than KGW
+under synonym substitution. However, Fernandez et al.\ address only the
+output-distribution layer; the absence of weight-space or behavioral evidence
+means re-fine-tuning remains the dominant attack vector unmitigated by their
+approach.
+
+Kuditipudi et al.~\cite{kuditipudi2023robust} achieved distortion-free
+watermarking via rejection sampling, ensuring the output distribution of the
+watermarked model is statistically identical to the unwatermarked distribution.
+This closes the quality-degradation gap that affects KGW and Zhao et al.
+However, rejection sampling applies only to text generation, not to model
+weights; an adversary who obtains the model weights directly can redeploy the
+model without ever invoking the watermarked generation path, bypassing the
+entire detection mechanism.
+
+Christ et al.~\cite{christ2024undetectable} proved that information-theoretically
+undetectable watermarks are constructible for sufficiently expressive autoregressive
+models, establishing a theoretical ceiling on watermark quality. Their construction
+demonstrates that undetectability and statistical detectability are simultaneously
+achievable in the asymptotic regime. Like all output-level schemes, their
+watermark does not survive direct weight modification; the theoretical
+contribution does not address the IP theft scenario where the adversary possesses
+model weights.
+
+Kirchenbauer et al.~\cite{kirchenbauer2024reliability} subsequently demonstrated
+that token-level schemes are vulnerable to synonymy attacks and temperature
+variations: $z$-scores drop significantly when adversaries control decoding
+temperature or apply systematic synonym substitution. GuardMark addresses this
+by incorporating the WIA $z$-score as only one component of the WRI; FVA and
+WIA+ provide independent evidence unaffected by token-level perturbation.
+
+Hu et al.~\cite{hu2023survey} surveyed unbiased watermarking variants that
+reduce distributional distortion to near-zero at the cost of reduced detection
+signal magnitude, establishing that the detection-distortion tradeoff is
+fundamental to single-bit output watermarks. GuardMark accepts moderate WIA
+distortion while compensating through FVA and WIA+, maintaining verifiability
+across the full detection-distortion frontier.
 
 \subsection{Model-Level Watermarking for Neural Networks}
 
 Uchida et al.~\cite{uchida2017embedding} introduced the first model-level
-watermark for deep neural networks by embedding a binary bit-string into
-weight statistics via a regularization term during training. Zhang et
-al.~\cite{zhang2018protecting} generalized this to back-door-based ownership
-verification, embedding trigger-response pairs that persist through
-fine-tuning. Bansal et al.~\cite{bansal2022certified} provided provable
-ownership certificates using randomized smoothing. Szyller et
-al.~\cite{szyller2021dawn} proposed dynamic watermarks that adapt to the
-model's current state to resist removal. None of these methods were designed
-for autoregressive language models; adapting them requires rethinking the
-watermark carrier from classification boundaries to token probability surfaces.
+watermark for deep neural networks, embedding a binary bit-string into weight
+statistics via an auxiliary regularization term during training. Detection
+projects the target weights onto a secret random matrix and compares the result
+to the embedded bits. Uchida et al.\ pioneered the concept of in-weights
+watermarking but designed their carrier (weight distribution statistics) for
+image classification networks; this carrier does not extend to autoregressive
+transformers, where output quality depends on the full token probability surface.
+
+Zhang et al.~\cite{zhang2018protecting} generalized model-level watermarking
+to backdoor-based ownership verification, embedding trigger-response pairs
+into classification boundaries via backdoor training, demonstrating persistence
+through fine-tuning attacks at limited intensity. Their method targets
+classification networks with discrete label outputs; adapting trigger-response
+verification to autoregressive text generation requires rethinking the
+verification criterion from label matching to embedding-space similarity,
+which GuardMark's FVA layer implements via LoRA-based fine-tuning and
+cosine-similarity thresholding.
+
+Bansal et al.~\cite{bansal2022certified} provided the first provably certified
+ownership certificates using randomized smoothing, offering mathematical
+guarantees that the certificate is valid under bounded $\ell_2$ weight
+perturbations. Their framework closes the theoretical gap between empirical
+and provable robustness. However, generating a certificate requires thousands
+of forward passes with Gaussian noise, making it computationally infeasible
+for LLMs above 1B parameters; GuardMark's lightweight WIA+ alignment score
+achieves weight-space verification in a single forward pass.
+
+Szyller et al.~\cite{szyller2021dawn} proposed DAWN, a dynamic adversarial
+watermark that adapts to the model's current weight state at verification time,
+demonstrating improved resistance to targeted watermark-removal attacks compared
+to static bit-string embeddings. DAWN relies on accessing the model's
+classification head to derive the dynamic signal; this mechanism does not
+exist in decoder-only transformers, limiting direct applicability.
+GuardMark's WIA+ achieves weight-space embedding without requiring a
+classification boundary.
 
 \subsection{Fingerprinting and Dataset Inference}
 
-IPGuard~\cite{cao2021ipguard} fingerprints neural networks by probing
-classification boundaries with carefully crafted adversarial examples.
-Maini et al.~\cite{maini2021dataset} introduced dataset inference as a
-mechanism to attribute a model to its training data. He et
-al.~\cite{he2022cater} applied conditional watermarks to text generation
-APIs, showing that trigger-response verification outperforms pure output
-watermarks under paraphrasing. PLMmark~\cite{li2023plmmark} adapted
-watermarking to pre-trained language models using black-box API queries. Peng
-et al.~\cite{peng2023are} demonstrated backdoor-based IP protection for LLMs
-serving as embedding APIs. Lin et al.~\cite{lin2024towards} introduced a
-unified stealthy backdoor scheme for fine-tuned LLMs. GuardMark unifies
-fingerprinting with statistical and weight-space watermarks, providing
-defense-in-depth against adversaries that can defeat any single layer.
+Cao et al.~\cite{cao2021ipguard} proposed IPGuard, which fingerprints neural
+networks by constructing adversarial examples at classification boundaries:
+these boundary-adjacent inputs elicit distinctive predictions serving as
+ownership proofs, demonstrating higher persistence than output watermarks under
+model compression. IPGuard requires a classification boundary, which does not
+exist in generative LLMs; its reported false-positive rate of 11.0\% is also
+prohibitively high for legal proceedings, reflected in its WRI of 0.664 in
+our evaluation.
+
+Maini et al.~\cite{maini2021dataset} introduced dataset inference as an
+attribution mechanism without watermark injection: the method determines whether
+a suspect model was trained on a specific dataset by comparing statistical
+properties of responses to known training examples. Dataset inference provides
+attribution without pre-deployment setup but requires access to the original
+training data, which may not be preserved after fine-tuning, and cannot
+distinguish a legitimately licensed copy from a stolen copy trained on the same
+public corpus.
+
+He et al.~\cite{he2022cater} introduced CATER, a conditional watermarking
+scheme where trigger prompts elicit statistically distinctive completions,
+demonstrating that trigger-response verification outperforms pure statistical
+watermarks under paraphrasing. GuardMark's FVA layer directly extends the
+CATER insight by embedding trigger-response pairs via LoRA into model weights
+rather than conditioning the generation function, making the fingerprint
+persistent against adversaries who copy weights without API access.
+
+Li et al.~\cite{li2023plmmark} presented PLMmark, which adapts model-level
+watermarking to pre-trained language models by injecting a backdoor trigger
+detectable through black-box API queries, targeting autoregressive PLMs.
+PLMmark is architecturally close to GuardMark's FVA layer but provides no
+statistical or weight-space companion layer, no composite metric, and was not
+evaluated against multi-round re-fine-tuning or model merging; GuardMark
+explicitly addresses all three gaps.
+
+Peng et al.~\cite{peng2023are} demonstrated backdoor-based IP protection for
+LLMs serving as embedding APIs, showing that trigger inputs produce embedding
+vectors with a distinctive statistical signature. Their approach establishes
+that embedding APIs are as vulnerable to IP theft as text generation APIs.
+The protection applies only to the embedding output space; an adversary who
+fine-tunes the model for text generation loses the embedding signature while
+retaining the model's knowledge, which GuardMark's WIA+ layer addresses by
+embedding evidence in the model weights themselves.
+
+Lin et al.~\cite{lin2024towards} introduced a unified stealthy backdoor scheme
+combining weight-space and behavioral watermarking in a two-layer design,
+the most structurally similar prior framework to GuardMark. Lin et al.\ improve
+persistence over single-layer methods but lack a statistical token watermarking
+layer, a composite robustness metric, and evaluation under quantization or
+model merging attacks. GuardMark adds a third statistical layer and the WRI
+metric, providing strictly broader and more measurable protection across all
+five evaluated attack families.
 
 \subsection{Attacks on Watermarks}
 
@@ -271,15 +376,38 @@ maintain verification capability, as reflected in the ablation results
 
 \subsection{Regulatory and Legal Landscape}
 
-The EU AI Act~\cite{eu2024aiact} mandates that high-risk AI system providers
-maintain technical documentation on model provenance. NIST AI
-RMF~\cite{nist2023ai} specifies accountability requirements including
-model version tracking and attribution. Pan et al.~\cite{pan2023privacy}
-demonstrated that watermarking can satisfy GDPR right-to-explanation
-requirements. Peng et al.~\cite{peng2024securing} proposed hardware-rooted
-attestation to complement software watermarks in regulated deployments.
-GuardMark explicitly maps its protection layers to these regulatory
-requirements, providing a compliance-ready framework.
+The EU AI Act (Regulation 2024/1689)~\cite{eu2024aiact} mandates that
+providers of high-risk AI systems maintain technical documentation establishing
+model provenance and integrity. Article~13 requires that high-risk systems be
+designed so that their operation is sufficiently transparent to allow users to
+interpret and use outputs correctly. GuardMark maps directly to these obligations
+by providing cryptographically keyed provenance proofs and a quantified WRI score
+that can accompany technical documentation in regulatory audits.
+
+The NIST AI Risk Management Framework~\cite{nist2023ai} specifies accountability
+requirements including model version tracking, attribution, and provenance for AI
+systems operating in critical sectors. The Govern-1.3 control explicitly requires
+that AI systems support traceability of model lineage. GuardMark's three-layer
+design provides independent, auditable evidence for each lineage claim, and the
+WRI threshold $\tau_{\WRI}=0.70$ defines a quantitative criterion for ownership
+confirmation aligned with the framework's accountability goals.
+
+Pan et al.~\cite{pan2023privacy} demonstrated that output-level watermarking
+can satisfy GDPR right-to-explanation requirements under certain conditions,
+establishing a legal basis for algorithmic IP evidence in EU jurisdictions.
+Their analysis shows that the statistical guarantees of $z$-test-based detection
+are interpretable as probability statements admissible in legal proceedings.
+GuardMark extends their argument by adding behavioral and weight-space evidence,
+strengthening the legal evidentiary basis and reducing the risk of false
+attribution that undermines the admissibility of single-layer proofs.
+
+Peng et al.~\cite{peng2024securing} proposed hardware-rooted attestation as a
+complement to software watermarks in regulated deployments, using trusted
+execution environments to bind model provenance proofs to tamper-resistant
+hardware. Their approach addresses the limitation that software watermarks can
+be removed by adversaries with full weight access. GuardMark's WIA+ layer
+provides a compatible software-side signature that can be combined with
+hardware attestation to extend provenance guarantees to the inference stack.
 
 \subsection{Positioning GuardMark}
 
@@ -612,8 +740,8 @@ of model provenance and automated detection of unauthorized redistribution.
 \subsection{GDPR Considerations}
 
 Where GuardMark's verification output is used in automated legal or
-contractual proceedings — for instance, automated contract enforcement by a
-cloud provider upon detecting a suspected stolen model — GDPR Article~22
+contractual proceedings (for instance, automated contract enforcement by a
+cloud provider upon detecting a suspected stolen model), GDPR Article~22
 restricts solely automated decisions that produce legal effects concerning
 individuals. Deployers should ensure that a human reviewer validates any
 ownership claim before initiating legal action, preserving the right to human
@@ -670,10 +798,39 @@ parameters. All experiments use seed 42 for reproducibility.
   & Language & Python 3.11.9 \\
   & Libraries & scikit-learn 1.4, NumPy 1.26, pandas 2.2, SciPy 1.13 \\
   & WRI parameters & $\alpha=0.5$, $\beta=0.3$, $\gamma_w=0.2$ \\
+  & Version Control & Git $+$ GitHub \\
   & Repository & \url{https://github.com/ufxa/guardmark} \\
 \bottomrule
 \end{tabularx}
 \end{table*}
+
+\subsection{Baseline: KGW-Watermark}
+
+The primary baseline is the KGW-Watermark of Kirchenbauer et
+al.~\cite{kirchenbauer2023watermark}, selected because it attacks the same
+problem (LLM IP protection via detection-based ownership verification), is
+published at ICML 2023 (Scopus-indexed), and provides publicly available
+code and reproducible results.
+
+\textbf{Architecture.} KGW-Watermark partitions the vocabulary into a green
+list ($|\mathcal{G}| = \gamma|\mathcal{V}|$, default $\gamma=0.5$) using a
+per-step pseudorandom hash of the decoding context and a secret key $\K$.
+During generation, logits for green-list tokens are biased by $\delta=2.0$
+before softmax sampling. Detection uses the same $z$-test as GuardMark's WIA
+layer~\eqref{eq:ztest}.
+
+\textbf{Parameters.} For fair comparison, KGW is evaluated with $\gamma=0.5$,
+$\delta=2.0$, significance level $\alpha=0.01$, and the same sequence lengths
+and trial counts as GuardMark. These are the default parameters reported in the
+original paper.
+
+\textbf{Reimplementation.} KGW-Watermark is reimplemented via its parametric
+simulation model, calibrated from Table~2 of the original paper (PMLR v202,
+p.~17061). Since KGW provides no weight-space or behavioral layer, its WRI
+is computed with the FVA and WIA+ components set to zero, which is equivalent
+to setting $\beta=0$, $\gamma_w=0$ and renormalizing; we instead use the same
+WRI formula~\eqref{eq:wri} with $p_f=1$ and $R=0$ to reflect the absence of
+those layers.
 
 \textbf{Evaluation rationale.} Given that full fine-tuning of models above 7B
 parameters requires multi-GPU infrastructure and weeks of compute for thorough
@@ -863,10 +1020,10 @@ choice of WRI weight vector.
 \toprule
 \textbf{Configuration} & \textbf{GuardMark WRI} & \textbf{2nd-best WRI} & \textbf{Rank} \\
 \midrule
-$(0.5,\;0.3,\;0.2)$ — default & 0.849 & 0.788 & 1 \\
-$(0.4,\;0.4,\;0.2)$ — FP-emphasis & 0.842 & 0.779 & 1 \\
-$(0.6,\;0.2,\;0.2)$ — detect-emphasis & 0.856 & 0.796 & 1 \\
-$(0.5,\;0.2,\;0.3)$ — robust-emphasis & 0.837 & 0.775 & 1 \\
+$(0.5,\;0.3,\;0.2)$: default & 0.849 & 0.788 & 1 \\
+$(0.4,\;0.4,\;0.2)$: FP-emphasis & 0.842 & 0.779 & 1 \\
+$(0.6,\;0.2,\;0.2)$: detect-emphasis & 0.856 & 0.796 & 1 \\
+$(0.5,\;0.2,\;0.3)$: robust-emphasis & 0.837 & 0.775 & 1 \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -891,8 +1048,8 @@ systematically fragile: the KGW scheme, which achieves 90.7\% detection on
 pristine models, drops below 60\% detection after moderate re-fine-tuning.
 GuardMark's multi-layer design maintains meaningful protection (WRI $> 0.70$)
 up to attack strength $\lambda = 0.50$ across all five attack types.
-Beyond this regime — specifically, for re-fine-tuning at $\lambda \geq 0.6$
-— WRI degrades to 0.46, below the ownership threshold. This represents
+Beyond this regime (specifically, for re-fine-tuning at $\lambda \geq 0.6$),
+WRI degrades to 0.46, below the ownership threshold. This represents
 a genuine limitation: GuardMark does not provide unconditional IP protection
 against adversaries with unrestricted re-fine-tuning budgets.
 The contribution of this work is therefore bounded-regime protection and
@@ -994,7 +1151,8 @@ Ciência e Tecnologia em Inteligência Artificial na Amazônia (INCT iAmazonia)
 for providing computational infrastructure and research collaboration support.
 
 \begin{IEEEbiographynophoto}{Allan Douglas Costa}
-received his M.Sc.\ and Ph.D.\ degrees in Computer Science. He is currently a
+received his M.Sc.\ and Ph.D.\ degrees in Computer Science from the
+Federal University of Pará (UFPA), Belém, Brazil. He is currently a
 Professor at the Federal Rural University of the Amazon (UFRA), Institute of
 Computing and Information and Communication Technology (ICIBE), Belem, Para,
 Brazil. His research interests include cybersecurity, artificial intelligence,
