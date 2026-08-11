@@ -1,7 +1,7 @@
 % ============================================================
-%  artigo11.tex — GuardMark (WPMC 2026, conference, 6-page target)
+%  artigo11.tex --- GuardMark (WPMC 2026, conference, 6-page target)
 %  Venue:  29th WPMC, Natal, Brazil, 8-11 Nov 2026
-%  Track:  7 — Security, Privacy & Ethics in Future Networks
+%  Track:  7 --- Security, Privacy & Ethics in Future Networks
 %  Deadline: Aug 16, 2026
 % ============================================================
 \documentclass[conference]{IEEEtran}
@@ -62,15 +62,15 @@
 The widespread deployment of fine-tuned large language models (LLMs) as
 commercial services exposes model owners to intellectual property (IP) theft,
 unauthorized redistribution, and covert re-deployment without attribution.
-Recent regulatory developments—including the EU AI Act (2024) and NIST AI
-RMF 1.0—mandate traceable provenance for AI systems, yet existing
+Recent regulatory developments---including the EU AI Act (2024) and NIST AI
+RMF 1.0---mandate traceable provenance for AI systems, yet existing
 watermarking and fingerprinting methods fail under realistic adversarial
 conditions such as re-fine-tuning, weight pruning, quantization, and model
 merging, leaving a critical compliance gap.
 We propose \textbf{GuardMark}, a three-layer framework that jointly embeds
 statistical token watermarks, behavioral fingerprints, and weight-space
 gradient signatures into fine-tuned LLMs, providing verifiable IP protection
-suitable for supporting legal ownership claims via a novel composite metric—the
+suitable for supporting legal ownership claims via a novel composite metric---the
 \emph{Watermark Robustness Index} (WRI).
 Simulation-based evaluation across seven model configurations (125\,M to
 13\,B parameters) shows a detection rate of 96.5\%, a false-positive rate of
@@ -119,8 +119,8 @@ redundant, independently verifiable ownership proofs;
 unifying detection probability, false-positive rate, and attack robustness
 into a $[0,1]$-bounded score; and
 (3)~a \emph{multi-attack evaluation} under five realistic adversarial
-scenarios—re-fine-tuning, weight pruning, quantization, model merging, and
-paraphrasing—across seven model sizes (125\,M to 13\,B parameters).
+scenarios---re-fine-tuning, weight pruning, quantization, model merging, and
+paraphrasing---across seven model sizes (125\,M to 13\,B parameters).
 Code: \url{https://github.com/ufxa/guardmark}.
 
 % ─── II. Background and Related Work ─────────────────────────────────────────
@@ -187,10 +187,10 @@ and training data, and applies one or more of five attack operations
 (re-fine-tuning, pruning, quantization, merging, paraphrasing) at strength
 $\lambda \in [0,1]$, producing a suspect model $\hat{\M}$.
 The adversary does not know $\K$ or $\F$ (Kerckhoffs-style security).
-\emph{Security goals}: \textit{completeness}—$\hat{\M}$ derived from $\M^*$
-is accepted with high probability; \textit{soundness}—an independently trained
-$\tilde{\M}$ is rejected; \textit{robustness}—completeness holds within a
-bounded attack budget; \textit{imperceptibility}—$\M^*$ behaves
+\emph{Security goals}: \textit{completeness}---$\hat{\M}$ derived from $\M^*$
+is accepted with high probability; \textit{soundness}---an independently trained
+$\tilde{\M}$ is rejected; \textit{robustness}---completeness holds within a
+bounded attack budget; \textit{imperceptibility}---$\M^*$ behaves
 indistinguishably from an unwatermarked model.
 
 \begin{definition}[Watermark Robustness Index]
@@ -220,10 +220,10 @@ operate cooperatively during protection; OCA orchestrates verification.
   multi-layer evidence into a WRI score and binary ownership verdict.}
 \label{fig:overview}
 \centering
-\resizebox{\columnwidth}{!}{\input{figures/fig1_overview}}
+\includegraphics[width=\columnwidth]{figures/art11}
 \end{figure}
 
-\subsection{Layer 1 — WIA: Statistical Token Watermarking}
+\subsection{Layer 1 --- WIA: Statistical Token Watermarking}
 
 At each fine-tuning step $t$, the WIA computes a pseudorandom green list
 $\G_t \subset \mathcal{V}$ ($|\G_t|=\gamma|\mathcal{V}|$) via
@@ -237,7 +237,7 @@ and applies a one-sided $z$-test:
 \end{equation}
 The false-positive rate is exactly $\alpha=0.01$ by construction.
 
-\subsection{Layer 2 — FVA: Behavioral Fingerprinting}
+\subsection{Layer 2 --- FVA: Behavioral Fingerprinting}
 
 The FVA embeds $N_f$ trigger-response pairs $\F$ via a LoRA adapter
 $\Delta W_\F$ (rank $r$) minimizing cross-entropy:
@@ -246,7 +246,7 @@ Verification queries $\hat{\M}$ with each trigger, computes cosine similarity
 $s_i = \cos(\phi(\hat{r}_i), \phi(r_i))$, and accepts if
 $|\{i:s_i \geq \tau\}| / N_f \geq 0.75$.
 
-\subsection{Layer 3 — WIA+: Weight-Space Gradient Embedding}
+\subsection{Layer 3 --- WIA+: Weight-Space Gradient Embedding}
 
 The WIA+ embeds a steganographic signature in the gradient direction:
 \begin{equation}
@@ -304,8 +304,8 @@ simulation error: 0.7\% on $\hat{\gamma}$, 3.1\% on $\bar{z}$).
 \subsection{Detection Rate vs. Sequence Length}
 
 Figure~\ref{fig:performance} shows detection rate vs.\ sequence length.
-GuardMark achieves 96.5\% at 1000 tokens and 91.0\% at only 300 tokens—a
-10.7\,pp improvement over the nearest baseline—enabling reliable verification
+GuardMark achieves 96.5\% at 1000 tokens and 91.0\% at only 300 tokens---a
+10.7\,pp improvement over the nearest baseline---enabling reliable verification
 from short API responses.
 
 \begin{figure}[t]
@@ -397,7 +397,7 @@ Watermark Robustness Index (WRI), the first composite metric unifying
 detection probability, false-positive rate, and attack robustness.
 Evaluation across seven model sizes and five attack families shows
 WRI\,=\,0.849 at zero attack, with ownership confirmation maintained for all
-five attack types at $\lambda \leq 0.50$ and 3.2\% computational overhead—
+five attack types at $\lambda \leq 0.50$ and 3.2\% computational overhead---
 outperforming all baselines. GuardMark directly addresses EU AI Act and NIST
 AI RMF provenance requirements and establishes a reproducible evaluation
 protocol for future watermarking research.

@@ -11,6 +11,7 @@ __pycache__/
 *.pyc
 .DS_Store
 paper/*.pdf
+!paper/artigo11.pdf
 paper/*.aux
 paper/*.log
 paper/*.bbl
