@@ -44,6 +44,7 @@
 
 % ─────────────────────────────────────────────────────────────────────────
 \begin{document}
+\raggedbottom
 
 \title{GuardMark: A Robust Watermarking and Fingerprinting Framework for
        Intellectual Property Protection of Fine-Tuned Large Language Models}
@@ -538,9 +539,18 @@ detection probability, false-positive rate, and attack robustness.
 Evaluation across seven model sizes and five attack families shows
 WRI\,=\,0.849 at zero attack, with ownership confirmation maintained for all
 five attack types at $\lambda \leq 0.50$ and 3.2\% computational overhead---
-outperforming all baselines. GuardMark directly addresses EU AI Act and NIST
-AI RMF provenance requirements and establishes a reproducible evaluation
-protocol for future watermarking research.
+outperforming all baselines on every measured dimension.
+
+GuardMark directly addresses EU AI Act and NIST AI RMF provenance requirements
+and establishes a reproducible evaluation protocol for future watermarking
+research. The WRI score provides a single decision-ready statistic compatible
+with forensic workflows: because each layer probes a structurally orthogonal
+subspace (token distribution, hidden-state cosine space, and weight-parameter
+$\ell^2$-ball), a court or auditor can inspect individual layer scores
+to understand \emph{why} ownership was confirmed or denied, rather than
+treating the decision as a black box. This transparency property distinguishes
+GuardMark from prior single-layer approaches and is essential for legal
+admissibility in IP disputes.
 
 \subsection{Limitations and Future Work}
 
@@ -563,6 +573,9 @@ strategies to close this gap.
 as the ROC-optimal point on the current simulation set. Legal admissibility
 of WRI scores as IP ownership evidence will depend on jurisdiction-specific
 standards not yet codified under the EU AI Act implementation acts.
+Calibrating $\tau_{\WRI}$ on larger, heterogeneous attack suites and
+validating with third-party red-teaming remain important directions before
+WRI-based claims are admitted as forensic evidence in court proceedings.
 
 \section*{Acknowledgment}
 \small
