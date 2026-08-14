@@ -1,138 +1,103 @@
-% Figure 2 — GuardMark Protocol Sequence Diagram (B&W, IEEE style)
-% Line styles: thick solid = WIA injection; medium dashed = FVA fingerprint;
-%              dash-dot = OCA verification; dotted = adversarial attack
+% Figure 2 — GuardMark Protocol Sequence Diagram (B&W, IEEE style, compact)
 
 \begin{tikzpicture}[
   font=\scriptsize,
   >=Stealth,
-  % lifeline
   lline/.style={draw=black!35, thin, densely dashed},
-  % message arrow styles
   wm/.style={black, thick, solid, ->},
   fp/.style={black!70, thick, dashed, ->},
-  ov/.style={black!60, thick, dash dot, ->},
-  att/.style={black!50, thin, densely dotted, ->},
-  % boxes
+  ov/.style={black!55, thick, dash dot, ->},
+  att/.style={black!45, thin, densely dotted, ->},
   proc/.style={draw=black!80, fill=white, thick,
-               text width=2.5cm, align=center,
-               font=\scriptsize, inner sep=3pt},
+               text width=2.3cm, align=center,
+               font=\scriptsize, inner sep=2pt},
   procA/.style={draw=black!50, fill=gray!8, thin,
-                text width=2.5cm, align=center,
-                font=\scriptsize, inner sep=3pt},
-  % phase background
+                text width=2.3cm, align=center,
+                font=\scriptsize, inner sep=2pt},
   phBG/.style={draw=black!40, dashed, fill=gray!4, rounded corners=2pt,
-               inner xsep=4pt, inner ysep=3pt},
+               inner xsep=3pt, inner ysep=2pt},
   phATT/.style={draw=black!50, densely dotted, fill=gray!10, rounded corners=2pt,
-                inner xsep=4pt, inner ysep=3pt},
+                inner xsep=3pt, inner ysep=2pt},
   phVER/.style={draw=black!60, solid, fill=white, rounded corners=2pt,
-                inner xsep=4pt, inner ysep=3pt},
-  % participant headers
+                inner xsep=3pt, inner ysep=2pt},
   hOwner/.style={draw=black, fill=black, text=white, thick,
-                 minimum width=2.5cm, minimum height=0.6cm, align=center},
-  hEngine/.style={draw=black, fill=black!75, text=white, thick,
-                  minimum width=2.5cm, minimum height=0.6cm, align=center},
-  hModel/.style={draw=black, fill=black!40, text=white, thick,
-                 minimum width=2.5cm, minimum height=0.6cm, align=center},
+                 minimum width=2.3cm, minimum height=0.52cm, align=center},
+  hEngine/.style={draw=black, fill=black!72, text=white, thick,
+                  minimum width=2.3cm, minimum height=0.52cm, align=center},
+  hModel/.style={draw=black, fill=black!38, text=white, thick,
+                 minimum width=2.3cm, minimum height=0.52cm, align=center},
   hVerify/.style={draw=black, fill=gray!20, text=black, thick,
-                  minimum width=2.5cm, minimum height=0.6cm, align=center},
-  % verdict box
+                  minimum width=2.3cm, minimum height=0.52cm, align=center},
   verdict/.style={draw=black, fill=gray!15, thick,
-                  text width=2.5cm, align=center,
-                  font=\scriptsize\bfseries, inner sep=4pt},
+                  text width=2.3cm, align=center,
+                  font=\scriptsize\bfseries, inner sep=3pt},
 ]
 
-% ── Lifeline X positions ──────────────────────────────────────────────────
-\def\xO{0}      % Owner
-\def\xE{3.5}    % Engine
-\def\xM{7.0}    % Model
-\def\xV{10.5}   % Verifier
+\def\xO{0}
+\def\xE{3.3}
+\def\xM{6.6}
+\def\xV{9.9}
 
-% ── Participant headers ───────────────────────────────────────────────────
+% ── Headers ──────────────────────────────────────────────────────────────
 \node[hOwner]  at (\xO, 0) {\textbf{Model Owner}};
 \node[hEngine] at (\xE, 0) {\textbf{GuardMark Engine}};
-\node[hModel]  at (\xM, 0) {\textbf{Protected Model $\mathcal{M}^*$}};
+\node[hModel]  at (\xM, 0) {\textbf{Prot.\ Model $\mathcal{M}^*$}};
 \node[hVerify] at (\xV, 0) {\textbf{Verifier / Court}};
 
 % ── Lifelines ────────────────────────────────────────────────────────────
-\draw[lline] (\xO,-0.38) -- (\xO,-16.0);
-\draw[lline] (\xE,-0.38) -- (\xE,-16.0);
-\draw[lline] (\xM,-0.38) -- (\xM,-16.0);
-\draw[lline] (\xV,-0.38) -- (\xV,-16.0);
+\draw[lline] (\xO,-0.34) -- (\xO,-14.6);
+\draw[lline] (\xE,-0.34) -- (\xE,-14.6);
+\draw[lline] (\xM,-0.34) -- (\xM,-14.6);
+\draw[lline] (\xV,-0.34) -- (\xV,-14.6);
 
 % ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-% PHASE 1 — Watermark Injection
-% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-\node[phBG, fit={(-0.7,-0.65) (11.1,-6.35)},
-      label=above left:{\textbf{\small Phase 1: Watermark Injection}}] {};
+% PHASE 1
+\node[phBG, fit={(-0.6,-0.60) (10.5,-5.85)},
+      label=above left:{\textbf{\scriptsize Phase 1: Watermark Injection}}] {};
 
-% WIA: key + logit bias
-\draw[wm] (\xO,-1.2) -- node[above,font=\scriptsize]
-  {$\mathcal{K},\,\delta,\,\gamma$} (\xE,-1.2);
-\node[proc] at (\xE,-1.85) {Key schedule\\$\mathcal{G}_t \leftarrow h(\mathcal{K}\!\|\!t)$};
-\draw[wm] (\xE,-2.5) -- node[above,font=\scriptsize]
-  {$\Delta$-logit bias} (\xM,-2.5);
-\node[proc] at (\xM,-3.1) {$\ell_t[w]\mathrel{+}=\delta$\\$\forall w \in \mathcal{G}_t$};
+\draw[wm] (\xO,-1.05) -- node[above,font=\tiny]{$\mathcal{K},\delta,\gamma$} (\xE,-1.05);
+\node[proc] at (\xE,-1.65) {Key schedule\\$\mathcal{G}_t\!\leftarrow\!h(\mathcal{K}\!\|\!t)$};
+\draw[wm] (\xE,-2.25) -- node[above,font=\tiny]{$\Delta$-logit bias} (\xM,-2.25);
+\node[proc] at (\xM,-2.85) {$\ell_t[w]\mathrel{+}=\delta$\\$\forall w\in\mathcal{G}_t$};
 
-% FVA: fingerprint pairs + LoRA
-\draw[fp] (\xO,-3.9) -- node[above,font=\scriptsize]
-  {$\mathcal{F}=\{(p_i,r_i)\}_{i=1}^{N}$} (\xE,-3.9);
-\node[proc] at (\xE,-4.55) {Embed fingerprint\\trigger--response};
-\draw[fp] (\xE,-5.2) -- node[above,font=\scriptsize]
-  {LoRA adapter $\Delta W_{\mathcal{F}}$} (\xM,-5.2);
-
-\node[procA] at (\xM,-5.85)
-  {Protected Model\\$\mathcal{M}^*$ ready};
+\draw[fp] (\xO,-3.5) -- node[above,font=\tiny]{$\mathcal{F}=\{(p_i,r_i)\}^{N}$} (\xE,-3.5);
+\node[proc] at (\xE,-4.1) {Embed fingerprint\\trigger--response};
+\draw[fp] (\xE,-4.7) -- node[above,font=\tiny]{LoRA $\Delta W_{\mathcal{F}}$} (\xM,-4.7);
+\node[procA] at (\xM,-5.3) {$\mathcal{M}^*$ ready};
 
 % ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-% PHASE 2 — Adversarial Attack (optional)
-% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-\node[phATT, fit={(-0.7,-6.8) (11.1,-9.7)},
-      label=above left:{\textbf{\small Phase 2: Adversarial Attack} (optional)}] {};
+% PHASE 2
+\node[phATT, fit={(-0.6,-6.2) (10.5,-8.65)},
+      label=above left:{\textbf{\scriptsize Phase 2: Adversarial Attack} (optional)}] {};
 
-\draw[att] (\xM,-7.35) -- node[above,font=\scriptsize]
-  {re-fine-tune / prune / quantize} (\xO,-7.35);
-\node[procA, draw=black!60] at (\xE,-8.1)
-  {Suspect model\\$\hat{\mathcal{M}}$ generated};
-\draw[att,<->] (\xE+0.05,-8.6) -- node[right,font=\scriptsize]
-  {$\hat{\mathcal{M}}\approx\mathcal{M}^*$} (\xM-0.05,-9.2);
+\draw[att] (\xM,-6.75) -- node[above,font=\tiny]{re-fine-tune / prune / quantize} (\xO,-6.75);
+\node[procA, draw=black!55] at (\xE,-7.45) {Suspect model\\$\hat{\mathcal{M}}$ generated};
+\draw[att,<->] (\xE+0.05,-7.9) -- node[right,font=\tiny]{$\hat{\mathcal{M}}\!\approx\!\mathcal{M}^*$} (\xM-0.05,-8.4);
 
 % ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-% PHASE 3 — Ownership Verification
-% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-\node[phVER, fit={(-0.7,-10.1) (11.1,-15.65)},
-      label=above left:{\textbf{\small Phase 3: Ownership Verification}}] {};
+% PHASE 3
+\node[phVER, fit={(-0.6,-9.0) (10.5,-14.2)},
+      label=above left:{\textbf{\scriptsize Phase 3: Ownership Verification}}] {};
 
-\draw[ov] (\xO,-10.6) -- node[above,font=\scriptsize]
-  {Claim $+$ $\mathcal{K}$} (\xV,-10.6);
-\draw[ov] (\xV,-11.35) -- node[above,font=\scriptsize]
-  {Query $\hat{\mathcal{M}}$} (\xE,-11.35);
+\draw[ov] (\xO,-9.5) -- node[above,font=\tiny]{Claim $+$ $\mathcal{K}$} (\xV,-9.5);
+\draw[ov] (\xV,-10.15) -- node[above,font=\tiny]{Query $\hat{\mathcal{M}}$} (\xE,-10.15);
 
-% WIA z-test
-\node[proc] at (\xE,-12.0) {WIA $z$-test\\$z > z_\alpha$?};
-\draw[ov] (\xE,-12.65) -- node[above,font=\scriptsize]
-  {WIA score} (\xV,-12.65);
+\node[proc] at (\xE,-10.8) {WIA $z$-test\\$z>z_\alpha$?};
+\draw[ov] (\xE,-11.4) -- node[above,font=\tiny]{WIA score} (\xV,-11.4);
 
-% FVA cosine
-\draw[ov] (\xV,-13.35) -- node[above,font=\scriptsize]
-  {Fingerprint probes $\mathcal{F}$} (\xE,-13.35);
-\node[proc] at (\xE,-14.0) {FVA cosine sim\\$s_i \geq \tau$?};
-\draw[ov] (\xE,-14.65) -- node[above,font=\scriptsize]
-  {FVA score} (\xV,-14.65);
+\draw[ov] (\xV,-12.0) -- node[above,font=\tiny]{Fingerprint probes $\mathcal{F}$} (\xE,-12.0);
+\node[proc] at (\xE,-12.65) {FVA cosine\\$s_i\geq\tau$?};
+\draw[ov] (\xE,-13.25) -- node[above,font=\tiny]{FVA score} (\xV,-13.25);
 
-% Verdict
-\node[verdict] at (\xV,-15.35)
-  {$\mathrm{WRI}=\alpha p_d$\\$+\beta(1{-}p_{fp})+\gamma_w R$\\[2pt]Ownership verdict};
+\node[verdict] at (\xV,-13.9)
+  {$\mathrm{WRI}=\alpha p_d$\\$+\beta(1{-}p_{fp})+\gamma_w R$\\[1pt]Ownership verdict};
 
 % ── Legend ───────────────────────────────────────────────────────────────
-\begin{scope}[yshift=-16.7cm]
-  \draw[wm]  (0,0)   -- (0.8,0)   node[right, font=\scriptsize]
-    {WIA injection};
-  \draw[fp]  (3.5,0) -- (4.3,0)  node[right, font=\scriptsize]
-    {FVA fingerprint};
-  \draw[ov]  (7.0,0) -- (7.8,0)  node[right, font=\scriptsize]
-    {OCA verification};
-  \draw[att] (0,-0.55) -- (0.8,-0.55) node[right, font=\scriptsize]
-    {Adversarial attack};
+\begin{scope}[yshift=-15.3cm]
+  \draw[wm]  (0,0)    -- (0.75,0)   node[right,font=\tiny]{WIA injection};
+  \draw[fp]  (3.1,0)  -- (3.85,0)  node[right,font=\tiny]{FVA fingerprint};
+  \draw[ov]  (6.3,0)  -- (7.05,0)  node[right,font=\tiny]{OCA verification};
+  \draw[att] (0,-0.5) -- (0.75,-0.5) node[right,font=\tiny]{Adversarial attack};
 \end{scope}
 
 \end{tikzpicture}

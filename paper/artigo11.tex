@@ -20,7 +20,7 @@
 \usepackage{url}
 \usepackage{cite}
 \usepackage{microtype}
-% \usepackage{balance}  % replaced by IEEEtran's built-in column balancing
+\usepackage{balance}
 \usepackage{float}
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
 \usepackage{pifont}
@@ -44,7 +44,6 @@
 
 % ─────────────────────────────────────────────────────────────────────────
 \begin{document}
-\raggedbottom
 
 \title{GuardMark: A Robust Watermarking and Fingerprinting Framework for
        Intellectual Property Protection of Fine-Tuned Large Language Models}
@@ -587,7 +586,7 @@ This work was partially supported by FAPESPA, PRODEPA, and SEC365
 Cybersecurity Solutions; and by LICA, CCAD-IA, RNP, and INCT iAmazonia for
 infrastructure support.
 
-\IEEEtriggeratref{35}
+\balance
 \bibliographystyle{IEEEtran}
 \bibliography{references}
 
