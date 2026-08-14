@@ -21,6 +21,7 @@
 \usepackage{cite}
 \usepackage{microtype}
 % \usepackage{balance}  % replaced by IEEEtran's built-in column balancing
+\usepackage{float}
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
 \usepackage{pifont}
 \newcommand{\cmark}{\ding{51}}
@@ -163,7 +164,7 @@ closest to GuardMark but lack a statistical token layer, the WRI metric, and
 evaluation under quantization or model merging.
 Table~\ref{tab:related} summarizes the positioning.
 
-\begin{table}[t]
+\begin{table}[H]
 \caption{Positioning of GuardMark. S=statistical, B=behavioral, W=weight-space.}
 \label{tab:related}
 \renewcommand{\arraystretch}{1.1}
@@ -229,7 +230,7 @@ WIA+ adds a gradient-direction perturbation post-training.
 The Ownership Confirmation Agent (OCA) aggregates evidence from all three
 layers during verification, computing the final WRI score.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \caption{GuardMark architecture. Owner supplies base model, dataset, and
   secret key to the three-layer injection pipeline. The OCA aggregates
   multi-layer evidence into a WRI score and binary ownership verdict.}
@@ -278,19 +279,22 @@ pruning $\leq 50\%$ and 8-bit quantization for $\epsilon \geq 10^{-4}$.
 
 Figure~\ref{fig:sequence} details the interaction protocol among the Owner,
 GuardMark Engine, Protected Model, and Verifier across injection and
-verification phases. Algorithm~\ref{alg:guardmark} summarizes the
-procedures, including the novel WRI computation.
+verification phases.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \caption{GuardMark protocol sequence. Blue: WIA token watermarking;
-  green: FVA fingerprint embedding; orange: OCA verification; red: adversarial
-  attack path.}
+  green: FVA fingerprint embedding; orange: OCA ownership verification;
+  red: adversarial attack path.}
 \label{fig:sequence}
 \centering
 \resizebox{\columnwidth}{!}{\input{figures/fig2_sequence}}
 \end{figure}
 
-\begin{algorithm}[t]
+Algorithm~\ref{alg:guardmark} summarizes the complete injection and
+verification procedures, integrating all three layers into the WRI
+computation pipeline.
+
+\begin{algorithm}[h!]
 \small
 \SetAlgoLined
 \DontPrintSemicolon
@@ -369,7 +373,7 @@ GuardMark achieves 96.5\% at 1000 tokens and 91.0\% at only 300 tokens---a
 10.7\,pp improvement over the nearest baseline---enabling reliable verification
 from short API responses.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \caption{Detection rate vs.\ sequence length, 95\% CI, 30 trials, $\alpha=0.01$,
   seed=42.}
 \label{fig:performance}
@@ -386,7 +390,7 @@ Weight pruning and paraphrasing are moderate: WRI crosses 0.70 at $\lambda
 WRI below 0.70 at $\lambda=0.50$ and 0.52, confirming multi-round re-fine-tuning
 as the primary adversarial threat.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \caption{WRI vs.\ attack strength, 5 scenarios, 95\% CI, 50 trials, seed=42.
   Dashed: ownership threshold $\tau=0.70$.}
 \label{fig:security}
@@ -404,7 +408,7 @@ IPGuard's $\Delta$PPL is not applicable as it operates on a classification head,
 not on token generation. All WRI pairwise differences pass Wilcoxon signed-rank
 at $p<10^{-15}$, $r>0.68$, Bonferroni-corrected for six comparisons.
 
-\begin{table}[t]
+\begin{table}[H]
 \caption{Comparative evaluation, 100 trials, seed=42, $\lambda{=}0$.
   Det.=detection rate; FP=false-positive rate; $\Delta$PPL=perplexity
   increase vs.\ unwatermarked baseline (imperceptibility); OH=overhead~(\%).
@@ -435,7 +439,7 @@ across all evaluated scales---a 2.7$\times$ improvement over the next-best
 baseline (He CATER, 11.3\%). The WIA+ weight perturbation contributes only
 0.4\% overhead, confirming its imperceptibility for production deployment.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \caption{Computational overhead (\%) vs.\ model size. GuardMark remains below
   5\% at all scales; 95\% CI, 30 trials, seed=42.}
 \label{fig:scalability}
@@ -453,7 +457,7 @@ No single-layer configuration achieves WRI\,$\geq$\,0.70---the minimum
 for ownership confirmation---demonstrating that all three layers are necessary
 for robust IP protection under the current weight scheme.
 
-\begin{table}[t]
+\begin{table}[H]
 \caption{Layer ablation, 50 trials, seed=42.}
 \label{tab:ablation}
 \renewcommand{\arraystretch}{1.1}
