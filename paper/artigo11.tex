@@ -20,7 +20,7 @@
 \usepackage{url}
 \usepackage{cite}
 \usepackage{microtype}
-\usepackage{balance}
+% \usepackage{balance}  % replaced by IEEEtran's built-in column balancing
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
 \usepackage{pifont}
 \newcommand{\cmark}{\ding{51}}
@@ -441,9 +441,10 @@ baseline (He CATER, 11.3\%). The WIA+ weight perturbation contributes only
 Table~\ref{tab:ablation} quantifies each layer's WRI contribution.
 The full three-layer combination (WRI\,=\,0.849) is statistically
 indistinguishable from the individual-layer sum (0.850, $p=0.62$, paired
-$t$-test), confirming approximate additive decomposition. Crucially, the joint
-design reduces false-positive probability \emph{multiplicatively}: if one layer
-is defeated, the remaining two maintain $\WRI \geq 0.70$ for $\lambda\leq0.50$.
+$t$-test), confirming approximate additive decomposition.
+No single-layer configuration achieves WRI\,$\geq$\,0.70---the minimum
+for ownership confirmation---demonstrating that all three layers are necessary
+for robust IP protection under the current weight scheme.
 
 \begin{table}[t]
 \caption{Layer ablation, 50 trials, seed=42.}
@@ -461,7 +462,60 @@ w/o WIA+ (weight)     & 0.670          & 0.020 \\
 \end{tabularx}
 \end{table}
 
-% ─── VII. Conclusion ─────────────────────────────────────────────────────────
+% ─── VII. Discussion ──────────────────────────────────────────────────────────
+\section{Discussion}
+\label{sec:discussion}
+
+\textbf{Attack-specific analysis.}
+The five attack families expose qualitatively different degradation mechanisms.
+\emph{Re-fine-tuning} ($\lambda{=}0.6$: WRI\,=\,0.46) is the most destructive
+because it overwrites the green-list bias in new gradient updates, erasing
+the WIA signal while simultaneously shifting the weight distribution away
+from $\sigma$. \emph{Model merging} ($\lambda{=}0.52$: WRI\,=\,0.70) linearly
+interpolates weights between $\M^*$ and an independent model, diluting
+$\epsilon\sigma$ by a factor $(1{-}\lambda)$ and reducing cosine similarity
+of trigger responses. \emph{Weight pruning} ($\lambda{=}0.58$) removes
+the smallest-magnitude weights; because the WIA+ signature resides in the
+top gradient eigenspace---which is correlated with the largest-magnitude
+weights---it survives moderate pruning but degrades when high-magnitude
+parameters are affected at $\lambda>0.50$. \emph{Quantization} (8-bit, all
+$\lambda$: WRI\,=\,0.82) introduces bounded rounding noise at scale
+$2^{-8}$\,=\,0.0039\,$\gg$\,$\epsilon$\,=\,$10^{-4}$, which appears to
+raise concerns; however, the WIA token-level watermark is robust to
+weight quantization because detection operates on output token distributions,
+not weight values, maintaining WRI\,$>$\,0.70. \emph{Paraphrasing}
+($\lambda{=}0.62$) attacks the WIA layer exclusively; FVA and WIA+ remain
+intact, buffering the WRI drop.
+
+\textbf{Cross-layer interaction and WRI design.}
+The approximate additive behavior of WRI ($p=0.62$ for full vs.\
+sum-of-layers) implies that the three layers attack the same underlying
+statistical distribution from orthogonal directions, with minimal
+correlation in their residuals. This orthogonality is by design: WIA
+operates on the output probability simplex, FVA on the hidden-state cosine
+space of trigger responses, and WIA+ on the weight-parameter $\ell^2$ ball.
+An adversary must simultaneously attack all three subspaces to defeat
+GuardMark, whereas defeating any single layer costs only one
+attack budget level $\lambda$ while the remaining layers compensate.
+The $\gamma_w=0.2$ weight assigned to $R$ reflects the higher cost of
+the WIA+ attack (requiring gradient-space knowledge) relative to token-level
+or behavioral attacks; future work will optimize $(\alpha,\beta,\gamma_w)$
+via Bayesian hyperparameter search conditioned on the observed attack
+distribution in deployment environments.
+
+\textbf{Mobile and edge deployment.}
+GuardMark's 3.2\%--4.1\% computational overhead and $\epsilon=10^{-4}$
+weight perturbation are compatible with on-device LLM runtimes.
+The WRI verification procedure has $O(T+N_f)$ query complexity---linear in
+the number of tokens and fingerprint pairs---enabling provenance checks from
+a single 300-token API response. For 4-bit quantized edge models (GGUF,
+GPTQ), the WIA detection pathway remains unaffected since it operates on
+output logits, not weights; however, the WIA+ alignment score degrades
+because quantization noise ($\sim$$2^{-4}$) exceeds $\epsilon=10^{-4}$.
+Increasing $\epsilon$ to $10^{-3}$ would restore WIA+ robustness at the
+cost of a slight imperceptibility trade-off, which we leave to future work.
+
+% ─── VIII. Conclusion ────────────────────────────────────────────────────────
 \section{Conclusion}
 \label{sec:conclusion}
 
@@ -509,7 +563,7 @@ This work was partially supported by FAPESPA, PRODEPA, and SEC365
 Cybersecurity Solutions; and by LICA, CCAD-IA, RNP, and INCT iAmazonia for
 infrastructure support.
 
-\balance
+\IEEEtriggeratref{35}
 \bibliographystyle{IEEEtran}
 \bibliography{references}
 
