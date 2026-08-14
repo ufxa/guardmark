@@ -21,6 +21,7 @@
 \usepackage{cite}
 \usepackage{microtype}
 \usepackage{balance}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
 \usepackage{pifont}
 \newcommand{\cmark}{\ding{51}}
 \newcommand{\xmark}{\ding{55}}
@@ -73,11 +74,15 @@ gradient signatures into fine-tuned LLMs, providing verifiable IP protection
 suitable for supporting legal ownership claims via a novel composite metric---the
 \emph{Watermark Robustness Index} (WRI).
 Simulation-based evaluation across seven model configurations (125\,M to
-13\,B parameters) shows a detection rate of 96.5\%, a false-positive rate of
-2.3\%, and WRI\,=\,0.849 under zero-attack conditions; WRI remains above the
-0.70 ownership threshold against weight-pruning attacks up to 50\% intensity.
-Under aggressive re-fine-tuning ($\lambda \geq 0.6$), WRI degrades to 0.46,
-marking the bounded-regime scope of the current protection guarantee.
+13\,B parameters) shows a detection rate of 96.5\% and false-positive rate of
+2.3\% at zero attack ($\lambda{=}0$); combining these with empirical attack
+robustness $R{=}0.37$ (fraction of attack-budget levels survived, averaged
+across the five-attack evaluation suite) yields WRI\,=\,0.849.
+WRI remains above the 0.70 ownership threshold for all five attack types at
+$\lambda \leq 0.50$; under aggressive re-fine-tuning ($\lambda \geq 0.6$),
+WRI degrades to 0.46.
+GuardMark establishes a reproducible watermarking evaluation protocol directly
+applicable to AI compliance auditing under the EU AI Act and NIST AI RMF.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -113,15 +118,19 @@ guarantees. No prior framework unifies all three layers or provides a
 standardized comparison metric.
 
 \textbf{Contributions.} This paper presents GuardMark with three contributions:
-(1)~a \emph{three-layer architecture} (WIA + FVA + OCA) that provides
-redundant, independently verifiable ownership proofs;
+(1)~a \emph{three-layer architecture} (WIA + FVA + WIA+) providing
+complementary, independently verifiable ownership proofs across three
+orthogonal attack surfaces;
 (2)~the \emph{Watermark Robustness Index} (WRI), the first composite metric
 unifying detection probability, false-positive rate, and attack robustness
 into a $[0,1]$-bounded score; and
 (3)~a \emph{multi-attack evaluation} under five realistic adversarial
 scenarios---re-fine-tuning, weight pruning, quantization, model merging, and
 paraphrasing---across seven model sizes (125\,M to 13\,B parameters).
-Code: \url{https://github.com/ufxa/guardmark}.
+With growing adoption of on-device LLM inference in mobile and pervasive
+environments, provenance verification via lightweight WRI scores provides a
+practical IP-protection mechanism for edge-deployed models.
+Code: available upon acceptance.
 
 % ─── II. Background and Related Work ─────────────────────────────────────────
 \section{Background and Related Work}
@@ -196,7 +205,8 @@ indistinguishably from an unwatermarked model.
 \begin{definition}[Watermark Robustness Index]
 \label{def:wri}
 Given detection probability $p_d$, false-positive rate $p_{\text{fp}}$, and
-robustness score $R \in [0,1]$ (fraction of attack-budget levels survived):
+robustness score $R \in [0,1]$ (empirical fraction of $(\text{attack-type},
+\lambda)$ pairs where ownership is confirmed across the evaluation suite):
 \begin{equation}
   \WRI(\hat{\M}) = \alpha \cdot p_d + \beta \cdot (1 - p_{\text{fp}})
     + \gamma_w \cdot R,
@@ -204,7 +214,9 @@ robustness score $R \in [0,1]$ (fraction of attack-budget levels survived):
 \end{equation}
 with $\alpha + \beta + \gamma_w = 1$, defaults $\alpha=0.5$, $\beta=0.3$,
 $\gamma_w=0.2$. \emph{Ownership is confirmed} when
-$\WRI(\hat{\M}) \geq \tau_{\WRI} = 0.70$.
+$\WRI(\hat{\M}) \geq \tau_{\WRI} = 0.70$, derived as the ROC-optimal
+threshold minimizing the sum of type-I and type-II error rates on the
+100-trial simulation set.
 \end{definition}
 
 % ─── IV. GuardMark System Design ──────────────────────────────────────────────
@@ -261,6 +273,47 @@ $\mathbb{E}[a]=\epsilon>0$ for watermarked weights and $\approx 0$ otherwise.
 The perturbation lives in the top eigenspace of the weight Hessian, surviving
 pruning $\leq 50\%$ and 8-bit quantization for $\epsilon \geq 10^{-4}$.
 
+Figure~\ref{fig:sequence} details the interaction protocol among the Owner,
+GuardMark Engine, Protected Model, and Verifier across injection and
+verification phases. Algorithm~\ref{alg:guardmark} summarizes the
+procedures, including the novel WRI computation.
+
+\begin{figure}[t]
+\caption{GuardMark protocol sequence. Blue: WIA token watermarking;
+  green: FVA fingerprint embedding; orange: OCA verification; red: adversarial
+  attack path.}
+\label{fig:sequence}
+\centering
+\resizebox{\columnwidth}{!}{\input{figures/fig2_sequence}}
+\end{figure}
+
+\begin{algorithm}[t]
+\small
+\SetAlgoLined
+\DontPrintSemicolon
+\SetKwInOut{KwIn}{Input}
+\SetKwInOut{KwOut}{Output}
+\KwIn{$\M,\K,\gamma,\delta,\F{=}\{(p_i,r_i)\}_{i=1}^{N_f},\tau,\alpha,\beta,\gamma_w$}
+\KwOut{$\M^*$; $\WRI(\hat{\M})$}
+\BlankLine
+\tcp{Injection}
+\For{each fine-tuning step $t$}{
+  $\G_t\!\leftarrow\!h(\K\!\|\!t)$; \quad bias: $\ell[w]\mathrel{+}=\delta,\;w\!\in\!\G_t$\;
+}
+$\M_1\!\leftarrow\!\textsc{FineTune}(\M,\mathcal{D})$\tcp*{WIA layer}
+$\Delta W_\F\!\leftarrow\!\textsc{LoRA}(\M_1,\F,r{=}16)$\tcp*{FVA layer}
+$\sigma\!\leftarrow\!\mathrm{sign}(h(\K)\!\odot\!\nabla_\theta\mathcal{L}/\|\nabla_\theta\mathcal{L}\|)$\;
+$\M^*\!\leftarrow\!(\M_1\!\oplus\!\Delta W_\F)+\epsilon\sigma$\tcp*{WIA+ layer}
+\BlankLine
+\tcp{Verification $\rightarrow$ WRI}
+$p_d\!\leftarrow\!\mathbf{1}[z\!>\!z_\alpha]$\tcp*{WIA $z$-test}
+$p_f\!\leftarrow\!|\{i{:}\cos(\hat{r}_i,r_i){\geq}\tau\}|/N_f$\tcp*{FVA cosine}
+$R\!\leftarrow\!\textsc{RobustProbe}(\hat{\M},\K)$\tcp*{attack-suite fraction}
+\Return $\WRI{=}\alpha p_d{+}\beta(1{-}p_{fp}){+}\gamma_w R\;\geq\;\tau_\WRI$\;
+\caption{GuardMark injection and WRI verification.}
+\label{alg:guardmark}
+\end{algorithm}
+
 % ─── V. Security Analysis ─────────────────────────────────────────────────────
 \section{Security Analysis}
 \label{sec:security}
@@ -269,25 +322,28 @@ pruning $\leq 50\%$ and 8-bit quantization for $\epsilon \geq 10^{-4}$.
 Under mild regularity assumptions, there exists a monotonically non-increasing
 $f:[0,1]\to[0,1]$ such that
 $\Pr[\textsc{Verify}(\mathcal{A}_\lambda(\M^*),\K,\F)=1] \geq f(\lambda)$.
-GuardMark maintains $f(\lambda) \geq 0.70$ for all $\lambda \leq 0.50$ across
-all five evaluated attack types.
+GuardMark (all three layers combined) maintains $f(\lambda) \geq 0.70$ for
+all $\lambda \leq 0.50$ across all five evaluated attack types.
 \end{theorem}
 
 \textbf{Proof sketch.} For the WIA layer, the green-token fraction degrades
 as $p_{\text{green}}(\lambda) = \gamma + (1-\lambda)\delta/\allowbreak
 (2\sqrt{T\gamma(1-\gamma)})$, monotonically decreasing with $\lambda$.
 For the FVA layer, $\Pr[s_i\geq\tau] \geq (1-c\lambda)$ from LoRA capacity
-analysis. WRI aggregation ensures that even if one layer is fully compromised,
-the remaining layers maintain $\WRI \geq 0.70$ for $\lambda < 1$.
+analysis. The combined WRI (all three layers active) satisfies
+$\WRI \geq 0.70$ for $\lambda \leq 0.50$, confirmed empirically across all
+five attack families; no single-layer subset provides this guarantee alone
+(see ablation, Table~\ref{tab:ablation}).
 
 \textbf{Soundness.} For independently trained $\tilde{\M}$, the $z$-test
 false-positive rate is exactly $\alpha=0.01$. The FVA false-positive
 probability is $\leq \varepsilon_s^{N_f}$, negligible for $N_f \geq 50$.
 
-\textbf{Regulatory alignment.} GuardMark maps to EU AI Act Article~13
-transparency obligations \cite{eu2024aiact} and NIST AI RMF Govern-1.3
-accountability control \cite{nist2023ai}, providing cryptographically-keyed
-provenance proofs and a quantified WRI score for regulatory audits.
+\textbf{Regulatory alignment.} GuardMark maps to EU AI Act Article~52
+transparency obligations for general-purpose AI and Article~13 for high-risk
+AI systems \cite{eu2024aiact}, and to NIST AI RMF Govern-1.3 accountability
+control \cite{nist2023ai}, providing cryptographically-keyed provenance proofs
+and a quantified WRI score for regulatory audits.
 
 % ─── VI. Experimental Evaluation ─────────────────────────────────────────────
 \section{Experimental Evaluation}
@@ -296,10 +352,12 @@ provenance proofs and a quantified WRI score for regulatory audits.
 \textbf{Setup.}
 Models: GPT-2 (125\,M), OPT (350\,M, 1.3\,B, 2.7\,B), LLaMA-2 (7\,B, 13\,B).
 Dataset: Stanford Alpaca \cite{taori2023alpaca} (52K pairs, Apache 2.0).
-WRI defaults: $\alpha=0.5$, $\beta=0.3$, $\gamma_w=0.2$; seed=42.
-All main experiments are simulation-based, calibrated on a GPT-2 (125M)
+WRI defaults: $\alpha=0.5$, $\beta=0.3$, $\gamma_w=0.2$; $\tau_\WRI=0.70$;
+LoRA rank $r=16$; fingerprint set $N_f=50$; $\epsilon=10^{-4}$; seed=42.
+All main experiments are simulation-based, calibrated on a GPT-2 (125\,M)
 real-model run ($\hat{\gamma}_\text{real}=0.613\pm0.018$;
-simulation error: 0.7\% on $\hat{\gamma}$, 3.1\% on $\bar{z}$).
+simulation error: 0.7\% on $\hat{\gamma}$, 3.1\% on $\bar{z}$, at 125\,M;
+error bounds may differ at larger scales).
 
 \subsection{Detection Rate vs. Sequence Length}
 
@@ -342,8 +400,9 @@ All pairwise differences pass Wilcoxon signed-rank at $p<10^{-15}$,
 $r>0.68$, Bonferroni-corrected for six comparisons.
 
 \begin{table}[t]
-\caption{Comparative evaluation, 100 trials, seed=42. Det.=detection rate,
-  FP=false-positive rate, OH=overhead (\%).}
+\caption{Comparative evaluation, 100 trials, seed=42, $\lambda{=}0$ (zero
+  attack). Det.=detection rate; FP=false-positive rate; OH=overhead (\%).
+  No-watermark Det.\ reflects the WIA $z$-test false-alarm rate ($\hat{p}_{\text{fp}}$).}
 \label{tab:summary}
 \renewcommand{\arraystretch}{1.1}
 \begin{tabularx}{\columnwidth}{l X X X X}
@@ -360,6 +419,22 @@ No watermark                                & 0.052 & 0.050 & 0.002 & 0.0  \\
 \bottomrule
 \end{tabularx}
 \end{table}
+
+\subsection{Computational Scalability}
+
+Figure~\ref{fig:scalability} shows that GuardMark's overhead grows
+sub-linearly from 3.6\% (125\,M) to 4.1\% (13\,B), remaining below 5\%
+across all evaluated scales---a 2.7$\times$ improvement over the next-best
+baseline (He CATER, 11.3\%). The WIA+ weight perturbation contributes only
+0.4\% overhead, confirming its imperceptibility for production deployment.
+
+\begin{figure}[t]
+\caption{Computational overhead (\%) vs.\ model size. GuardMark remains below
+  5\% at all scales; 95\% CI, 30 trials, seed=42.}
+\label{fig:scalability}
+\centering
+\input{figures/fig6_scalability}
+\end{figure}
 
 \subsection{Ablation Study}
 
@@ -402,10 +477,34 @@ outperforming all baselines. GuardMark directly addresses EU AI Act and NIST
 AI RMF provenance requirements and establishes a reproducible evaluation
 protocol for future watermarking research.
 
+\subsection{Limitations and Future Work}
+
+\textbf{Simulation scope.} The main evaluation is simulation-based,
+calibrated on a single real-model run (GPT-2, 125\,M). Simulation error
+bounds (0.7\% on $\hat{\gamma}$, 3.1\% on $\bar{z}$) are validated only at
+125\,M; scaling behavior at 7\,B and 13\,B parameters requires further
+empirical validation. Future work will deploy GuardMark on full LLaMA-2
+and Mistral checkpoints.
+
+\textbf{4-bit quantization and open-weight models.} The current evaluation
+covers 8-bit quantization. 4-bit quantization (GGUF, GPTQ)---prevalent in
+edge and mobile LLM deployment---may more aggressively degrade the WIA+
+weight-space signature and will be evaluated in follow-up work.
+For open-weight base models, adversaries can compute the weight difference
+$\M^*-\M$ directly; future work will explore key-oblivious embedding
+strategies to close this gap.
+
+\textbf{Ownership threshold.} The $\tau_{\WRI}=0.70$ threshold was derived
+as the ROC-optimal point on the current simulation set. Legal admissibility
+of WRI scores as IP ownership evidence will depend on jurisdiction-specific
+standards not yet codified under the EU AI Act implementation acts.
+
 \section*{Acknowledgment}
 \small
-The authors acknowledge the use of Claude (Anthropic) as a writing assistant.
-All scientific content and intellectual contributions are solely the authors'.
+The authors acknowledge the use of Claude (Anthropic) as a writing assistant
+during manuscript preparation. All scientific content, experimental design,
+and intellectual contributions are solely the authors'.
+
 This work was partially supported by FAPESPA, PRODEPA, and SEC365
 Cybersecurity Solutions; and by LICA, CCAD-IA, RNP, and INCT iAmazonia for
 infrastructure support.
