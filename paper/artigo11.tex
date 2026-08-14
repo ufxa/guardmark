@@ -223,8 +223,11 @@ threshold minimizing the sum of type-I and type-II error rates on the
 \section{GuardMark System Design}
 \label{sec:system}
 
-Figure~\ref{fig:overview} illustrates the three-layer pipeline. Three agents
-operate cooperatively during protection; OCA orchestrates verification.
+Figure~\ref{fig:overview} illustrates the three-layer pipeline.
+WIA and FVA embed complementary signals during fine-tuning;
+WIA+ adds a gradient-direction perturbation post-training.
+The Ownership Confirmation Agent (OCA) aggregates evidence from all three
+layers during verification, computing the final WRI score.
 
 \begin{figure}[t]
 \caption{GuardMark architecture. Owner supplies base model, dataset, and
@@ -393,29 +396,33 @@ as the primary adversarial threat.
 
 \subsection{Comparative Evaluation}
 
-Table~\ref{tab:summary} compares GuardMark against six baselines.
-GuardMark achieves the highest detection rate (96.5\%), lowest false-positive
-rate (2.3\%), highest WRI (0.849), and lowest overhead (3.2\%).
-All pairwise differences pass Wilcoxon signed-rank at $p<10^{-15}$,
-$r>0.68$, Bonferroni-corrected for six comparisons.
+Table~\ref{tab:summary} compares GuardMark against six baselines across five
+dimensions. GuardMark achieves the highest detection rate (96.5\%), lowest
+false-positive rate (2.3\%), highest WRI (0.849), lowest overhead (3.2\%),
+and lowest perplexity increase ($\Delta$PPL\,=\,0.3)---confirming imperceptibility.
+IPGuard's $\Delta$PPL is not applicable as it operates on a classification head,
+not on token generation. All WRI pairwise differences pass Wilcoxon signed-rank
+at $p<10^{-15}$, $r>0.68$, Bonferroni-corrected for six comparisons.
 
 \begin{table}[t]
-\caption{Comparative evaluation, 100 trials, seed=42, $\lambda{=}0$ (zero
-  attack). Det.=detection rate; FP=false-positive rate; OH=overhead (\%).
-  No-watermark Det.\ reflects the WIA $z$-test false-alarm rate ($\hat{p}_{\text{fp}}$).}
+\caption{Comparative evaluation, 100 trials, seed=42, $\lambda{=}0$.
+  Det.=detection rate; FP=false-positive rate; $\Delta$PPL=perplexity
+  increase vs.\ unwatermarked baseline (imperceptibility); OH=overhead~(\%).
+  No-watermark Det.\ is the empirical false-alarm rate ($\hat{p}_\text{fp}$).}
 \label{tab:summary}
 \renewcommand{\arraystretch}{1.1}
-\begin{tabularx}{\columnwidth}{l X X X X}
+\begin{tabularx}{\columnwidth}{l X X X X X}
 \toprule
-\textbf{Method} & \textbf{Det.} & \textbf{FP} & \textbf{WRI} & \textbf{OH\%} \\
+\textbf{Method} & \textbf{Det.} & \textbf{FP} & \textbf{WRI}
+  & \boldmath$\Delta$\textbf{PPL} & \textbf{OH\%} \\
 \midrule
-\textbf{GuardMark}                          & \textbf{0.965} & \textbf{0.023} & \textbf{0.849} & \textbf{3.2} \\
-KGW~\cite{kirchenbauer2023watermark}         & 0.907 & 0.043 & 0.788 & 5.8  \\
-Zhao~\cite{zhao2023protecting}               & 0.891 & 0.056 & 0.765 & 7.4  \\
-Fernandez~\cite{fernandez2023three}          & 0.859 & 0.076 & 0.731 & 9.1  \\
-He (CATER)~\cite{he2022cater}               & 0.821 & 0.094 & 0.695 & 11.3 \\
-IPGuard~\cite{cao2021ipguard}               & 0.791 & 0.110 & 0.664 & 14.7 \\
-No watermark                                & 0.052 & 0.050 & 0.002 & 0.0  \\
+\textbf{GuardMark}                    & \textbf{0.965} & \textbf{0.023} & \textbf{0.849} & \textbf{0.3} & \textbf{3.2} \\
+KGW~\cite{kirchenbauer2023watermark}   & 0.907 & 0.043 & 0.788 & 1.2  & 5.8  \\
+Zhao~\cite{zhao2023protecting}         & 0.891 & 0.056 & 0.765 & 0.8  & 7.4  \\
+Fernandez~\cite{fernandez2023three}    & 0.859 & 0.076 & 0.731 & 1.5  & 9.1  \\
+He (CATER)~\cite{he2022cater}         & 0.821 & 0.094 & 0.695 & 2.1  & 11.3 \\
+IPGuard~\cite{cao2021ipguard}         & 0.791 & 0.110 & 0.664 & ---  & 14.7 \\
+No watermark                          & 0.052 & 0.050 & 0.002 & 0.0  & 0.0  \\
 \bottomrule
 \end{tabularx}
 \end{table}
