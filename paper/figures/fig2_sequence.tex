@@ -52,8 +52,9 @@
 
 % ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 % PHASE 1
-\node[phBG, fit={(-0.6,-0.60) (10.5,-5.85)},
-      label=above left:{\textbf{\scriptsize Phase 1: Watermark Injection}}] {};
+\node[phBG, fit={(-0.6,-0.85) (10.5,-5.85)}] {};
+\node[anchor=north west, font=\scriptsize\bfseries] at (-0.55,-0.88)
+  {Phase 1: Watermark Injection};
 
 \draw[wm] (\xO,-1.05) -- node[above,font=\tiny]{$\mathcal{K},\delta,\gamma$} (\xE,-1.05);
 \node[proc] at (\xE,-1.65) {Key schedule\\$\mathcal{G}_t\!\leftarrow\!h(\mathcal{K}\!\|\!t)$};
@@ -67,8 +68,9 @@
 
 % ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 % PHASE 2
-\node[phATT, fit={(-0.6,-6.2) (10.5,-8.65)},
-      label=above left:{\textbf{\scriptsize Phase 2: Adversarial Attack} (optional)}] {};
+\node[phATT, fit={(-0.6,-6.2) (10.5,-8.65)}] {};
+\node[anchor=north west, font=\scriptsize\bfseries] at (-0.55,-6.23)
+  {Phase 2: Adversarial Attack (optional)};
 
 \draw[att] (\xM,-6.75) -- node[above,font=\tiny]{re-fine-tune / prune / quantize} (\xO,-6.75);
 \node[procA, draw=black!55] at (\xE,-7.45) {Suspect model\\$\hat{\mathcal{M}}$ generated};
@@ -76,8 +78,9 @@
 
 % ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 % PHASE 3
-\node[phVER, fit={(-0.6,-9.0) (10.5,-14.2)},
-      label=above left:{\textbf{\scriptsize Phase 3: Ownership Verification}}] {};
+\node[phVER, fit={(-0.6,-9.0) (10.5,-14.2)}] {};
+\node[anchor=north west, font=\scriptsize\bfseries] at (-0.55,-9.03)
+  {Phase 3: Ownership Verification};
 
 \draw[ov] (\xO,-9.5) -- node[above,font=\tiny]{Claim $+$ $\mathcal{K}$} (\xV,-9.5);
 \draw[ov] (\xV,-10.15) -- node[above,font=\tiny]{Query $\hat{\mathcal{M}}$} (\xE,-10.15);
